@@ -344,8 +344,8 @@ def api_logout():
 # ---------- PROFIL ----------
 
 @app.get("/api/profil", response_model=SuccessResponse)
-def api_profil(current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
-    ref_code = current_user.referans_kodu
+def api_profil(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    ref_code = current_user.get("sub")
 
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref_code).first()
     if not kat:
@@ -399,8 +399,8 @@ def api_profil(current_user: Katilimci = Depends(get_current_user), db: Session 
 # ---------- ODEME ----------
 
 @app.get("/api/odeme-bilgi")
-def api_odeme_bilgi(current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
-    kat = db.query(Katilimci).filter(Katilimci.referans_kodu == current_user.referans_kodu).first()
+def api_odeme_bilgi(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    kat = db.query(Katilimci).filter(Katilimci.referans_kodu == current_user.get("sub")).first()
     if not kat:
         raise HTTPException(status_code=404, detail="Katylyjy tapylmady")
 
@@ -427,8 +427,8 @@ def api_odeme_bilgi(current_user: Katilimci = Depends(get_current_user), db: Ses
 
 @app.post("/api/odeme-yapildi", response_model=SuccessResponse)
 @limiter.limit("5/minute")
-def api_odeme_yapildi(request: Request, current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
-    ref = current_user.referans_kodu
+def api_odeme_yapildi(request: Request, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    ref = current_user.get("sub")
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
     if not kat:
         raise HTTPException(status_code=404, detail="Katylyjy tapylmady!")
@@ -447,16 +447,16 @@ def api_odeme_yapildi(request: Request, current_user: Katilimci = Depends(get_cu
 # ---------- TAKIM ----------
 
 @app.get("/api/takim-bilgi")
-def api_takim_bilgi(current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
-    kat = db.query(Katilimci).filter(Katilimci.referans_kodu == current_user.referans_kodu).first()
+def api_takim_bilgi(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    kat = db.query(Katilimci).filter(Katilimci.referans_kodu == current_user.get("sub")).first()
     if not kat:
         raise HTTPException(status_code=404, detail="Katylyjy tapylmady")
     return {"success": True, "data": {"katilimci": {"referans_kodu": kat.referans_kodu, "ad": kat.ad, "takim_kodu": kat.takim_kodu}}}
 
 @app.post("/api/takim-olustur", response_model=SuccessResponse)
 @limiter.limit("3/minute")
-def api_takim_olustur(request: Request, data: TakimOlustur, current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
-    lider_ref = current_user.referans_kodu
+def api_takim_olustur(request: Request, data: TakimOlustur, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    lider_ref = current_user.get("sub")
     takim_adi = sanitize(data.takim_adi, 50)
 
     if len(takim_adi) < 2 or len(takim_adi) > 50:
@@ -482,8 +482,8 @@ def api_takim_olustur(request: Request, data: TakimOlustur, current_user: Katili
 
 @app.post("/api/takima-katil", response_model=SuccessResponse)
 @limiter.limit("3/minute")
-def api_takima_katil(request: Request, data: TakimaKatil, current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
-    uye_ref = current_user.referans_kodu
+def api_takima_katil(request: Request, data: TakimaKatil, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    uye_ref = current_user.get("sub")
     takim_kodu = str(data.takim_kodu).strip().upper()
 
     if not re.match(r"^TEAM-[A-Z0-9]{5}$", takim_kodu):
@@ -524,7 +524,7 @@ def api_takima_katil(request: Request, data: TakimaKatil, current_user: Katilimc
 
 @app.post("/api/turnir-gosul", response_model=SuccessResponse)
 @limiter.limit("3/minute")
-def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
+def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     pubg_id = sanitize(data.pubg_id, 20)
     payment_phone = str(data.payment_phone or "").strip()
     tournament_id = sanitize(data.tournament_id or "", 50)
@@ -533,7 +533,7 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: Katilimc
     if not pubg_id or len(pubg_id) < 8 or not pubg_id.isdigit():
         raise HTTPException(status_code=400, detail="PUBG ID diňe san bolmaly (minimum 8)!")
 
-    ref = current_user.referans_kodu
+    ref = current_user.get("sub")
 
     if not turnir_id:
         turnir_id = 1
@@ -586,8 +586,8 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: Katilimc
 # ---------- KATILIMCI API ----------
 
 @app.get("/api/katilimci/me")
-def api_katilimci_me(current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
-    ref = current_user.referans_kodu
+def api_katilimci_me(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    ref = current_user.get("sub")
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
     if not kat:
         raise HTTPException(status_code=404, detail="Katylyjy tapylmady")
@@ -620,7 +620,7 @@ def api_katilimci_me(current_user: Katilimci = Depends(get_current_user), db: Se
     return {"success": True, "katilimci": result}
 
 @app.get("/api/katilimci/{ref_code}")
-def api_katilimci(ref_code: str, current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
+def api_katilimci(ref_code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref_code).first()
     if not kat:
         return {"success": False}
