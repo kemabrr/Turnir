@@ -345,11 +345,13 @@ def api_logout():
 
 @app.get("/api/profil", response_model=SuccessResponse)
 def api_profil(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    ref_code = current_user.get("sub")
+    ref_code = current_user.get("sub")  # Dict-den al
 
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref_code).first()
     if not kat:
         raise HTTPException(status_code=404, detail="Katylyjy tapylmady")
+    # ... galan kod şol bir
+
 
     takim = db.query(Takim).filter(Takim.takim_kodu == kat.takim_kodu).first() if kat.takim_kodu else None
 
@@ -402,8 +404,7 @@ def api_profil(current_user: dict = Depends(get_current_user), db: Session = Dep
 def api_odeme_bilgi(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     ref_code = current_user.get("sub")
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref_code).first()
-    if not kat:
-        raise HTTPException(status_code=404, detail="Katylyjy tapylmady")
+    # ... galan kod şol bir
 
     turnir_tolek = "5 Manat"
     turnir_tolek_usuly = "TMCell SMS"
@@ -428,8 +429,8 @@ def api_odeme_bilgi(current_user: dict = Depends(get_current_user), db: Session 
 
 @app.post("/api/odeme-yapildi", response_model=SuccessResponse)
 @limiter.limit("5/minute")
-def api_odeme_yapildi(request: Request, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    ref = current_user.get("sub")
+def api_odeme_yapildi(request: Request, current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
+    ref = current_user.referans_kodu
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
     if not kat:
         raise HTTPException(status_code=404, detail="Katylyjy tapylmady!")
@@ -451,6 +452,8 @@ def api_odeme_yapildi(request: Request, current_user: dict = Depends(get_current
 def api_takim_bilgi(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     ref_code = current_user.get("sub")
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref_code).first()
+    # ... galan kod şol bir
+filter(Katilimci.referans_kodu == current_user.referans_kodu).first()
     if not kat:
         raise HTTPException(status_code=404, detail="Katylyjy tapylmady")
     return {"success": True, "data": {"katilimci": {"referans_kodu": kat.referans_kodu, "ad": kat.ad, "takim_kodu": kat.takim_kodu}}}
@@ -459,6 +462,9 @@ def api_takim_bilgi(current_user: dict = Depends(get_current_user), db: Session 
 @limiter.limit("3/minute")
 def api_takim_olustur(request: Request, data: TakimOlustur, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     lider_ref = current_user.get("sub")
+    # ... galan kod şol bir
+ db: Session = Depends(get_db)):
+    lider_ref = current_user.referans_kodu
     takim_adi = sanitize(data.takim_adi, 50)
 
     if len(takim_adi) < 2 or len(takim_adi) > 50:
@@ -482,6 +488,8 @@ def api_takim_olustur(request: Request, data: TakimOlustur, current_user: dict =
     logger.info(f"Topar: {kod} - {takim_adi}")
     return {"success": True, "message": "Topar üstünlikli döredildi!", "data": {"takim_kodu": kod}}
 
+@app.post("/api/takima-katil", response_model=SuccessResponse)
+@limiter.limit("3/minute")
 @app.post("/api/takima-katil", response_model=SuccessResponse)
 @limiter.limit("3/minute")
 def api_takima_katil(request: Request, data: TakimaKatil, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -527,7 +535,7 @@ def api_takima_katil(request: Request, data: TakimaKatil, current_user: dict = D
 
 @app.post("/api/turnir-gosul", response_model=SuccessResponse)
 @limiter.limit("3/minute")
-def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
     pubg_id = sanitize(data.pubg_id, 20)
     payment_phone = str(data.payment_phone or "").strip()
     tournament_id = sanitize(data.tournament_id or "", 50)
@@ -536,7 +544,7 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
     if not pubg_id or len(pubg_id) < 8 or not pubg_id.isdigit():
         raise HTTPException(status_code=400, detail="PUBG ID diňe san bolmaly (minimum 8)!")
 
-    ref = current_user.get("sub")
+    ref = current_user.referans_kodu
 
     if not turnir_id:
         turnir_id = 1
@@ -589,8 +597,8 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
 # ---------- KATILIMCI API ----------
 
 @app.get("/api/katilimci/me")
-def api_katilimci_me(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    ref = current_user.get("sub")
+def api_katilimci_me(current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
+    ref = current_user.referans_kodu
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
     if not kat:
         raise HTTPException(status_code=404, detail="Katylyjy tapylmady")
@@ -623,7 +631,7 @@ def api_katilimci_me(current_user: dict = Depends(get_current_user), db: Session
     return {"success": True, "katilimci": result}
 
 @app.get("/api/katilimci/{ref_code}")
-def api_katilimci(ref_code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+def api_katilimci(ref_code: str, current_user: Katilimci = Depends(get_current_user), db: Session = Depends(get_db)):
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref_code).first()
     if not kat:
         return {"success": False}
@@ -663,7 +671,7 @@ def api_admin_login(request: Request, data: AdminLogin):
     return {"success": True, "message": "Giriş üstünlikli!", "data": {"access_token": token}}
 
 @app.get("/api/admin-panel")
-def api_admin_panel(admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
+def api_admin_panel(admin: bool = Depends(get_current_admin), db: Session = Depends(get_db)):
     stats = get_stats(db)
 
     katilimcilar = db.query(Katilimci).order_by(Katilimci.kayit_tarihi.desc()).all()
@@ -717,7 +725,7 @@ def api_admin_panel(admin: dict = Depends(get_current_admin), db: Session = Depe
     }
 
 @app.post("/api/admin-turnir-ekle", response_model=SuccessResponse)
-def api_admin_turnir_ekle(data: TurnirCreate, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
+def api_admin_turnir_ekle(data: TurnirCreate, admin: bool = Depends(get_current_admin), db: Session = Depends(get_db)):
     ad = sanitize(data.ad, 100)
     senesi = sanitize(data.senesi, 50)
     wagty = sanitize(data.wagty, 50)
@@ -757,7 +765,7 @@ def api_admin_turnir_ekle(data: TurnirCreate, admin: dict = Depends(get_current_
     return {"success": True, "message": "Turnir üstünlikli goşuldy!"}
 
 @app.post("/api/admin-turnir-guncelle", response_model=SuccessResponse)
-def api_admin_turnir_guncelle(data: TurnirUpdate, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
+def api_admin_turnir_guncelle(data: TurnirUpdate, admin: bool = Depends(get_current_admin), db: Session = Depends(get_db)):
     turnir = db.query(Turnir).filter(Turnir.id == data.turnir_id).first()
     if not turnir:
         raise HTTPException(status_code=404, detail="Turnir tapylmady!")
@@ -783,7 +791,7 @@ def api_admin_turnir_guncelle(data: TurnirUpdate, admin: dict = Depends(get_curr
     return {"success": True, "message": "Turnir üstünlikli üýtgedildi!"}
 
 @app.post("/api/admin-turnir-sil", response_model=SuccessResponse)
-def api_admin_turnir_sil(data: AdminTurnirSil, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
+def api_admin_turnir_sil(data: AdminTurnirSil, admin: bool = Depends(get_current_admin), db: Session = Depends(get_db)):
     turnir_id = data.turnir_id
 
     db.query(Katilimci).filter(Katilimci.turnir_id == turnir_id).update({"turnir_id": None})
@@ -794,7 +802,7 @@ def api_admin_turnir_sil(data: AdminTurnirSil, admin: dict = Depends(get_current
     return {"success": True, "message": "Turnir üstünlikli pozuldy!"}
 
 @app.post("/api/admin-ayarlari-kaydet", response_model=SuccessResponse)
-def api_admin_ayarlari_kaydet(data: AdminAyarlar, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
+def api_admin_ayarlari_kaydet(data: AdminAyarlar, admin: bool = Depends(get_current_admin), db: Session = Depends(get_db)):
     for key, value in data.ayarlar.items():
         if value is not None:
             set_ayar_db(key, str(value), db)
@@ -802,7 +810,7 @@ def api_admin_ayarlari_kaydet(data: AdminAyarlar, admin: dict = Depends(get_curr
     return {"success": True, "message": "Ayarlar üstünlikli saklandy!"}
 
 @app.post("/api/admin-onayla", response_model=SuccessResponse)
-def api_admin_onayla(data: AdminOnayla, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
+def api_admin_onayla(data: AdminOnayla, admin: bool = Depends(get_current_admin), db: Session = Depends(get_db)):
     ref = data.referans_kodu
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
     if not kat:
@@ -822,7 +830,7 @@ def api_admin_onayla(data: AdminOnayla, admin: dict = Depends(get_current_admin)
     return {"success": True, "message": "Katylyjy tassyklandy!"}
 
 @app.post("/api/admin-reddet", response_model=SuccessResponse)
-def api_admin_reddet(data: AdminReddet, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
+def api_admin_reddet(data: AdminReddet, admin: bool = Depends(get_current_admin), db: Session = Depends(get_db)):
     ref = data.referans_kodu
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
     if not kat:
@@ -837,7 +845,7 @@ def api_admin_reddet(data: AdminReddet, admin: dict = Depends(get_current_admin)
     return {"success": True, "message": "Katylyjy ret edildi!"}
 
 @app.post("/api/admin-poz", response_model=SuccessResponse)
-def api_admin_poz(data: AdminPoz, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
+def api_admin_poz(data: AdminPoz, admin: bool = Depends(get_current_admin), db: Session = Depends(get_db)):
     ref = data.referans_kodu
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
     if not kat:
@@ -866,7 +874,7 @@ def api_admin_poz(data: AdminPoz, admin: dict = Depends(get_current_admin), db: 
     return {"success": True, "message": "Katylyjy pozuldy!"}
 
 @app.get("/api/turnir-detay/{turnir_id}")
-def api_turnir_detay(turnir_id: int, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
+def api_turnir_detay(turnir_id: int, admin: bool = Depends(get_current_admin), db: Session = Depends(get_db)):
     turnir = db.query(Turnir).filter(Turnir.id == turnir_id).first()
     if not turnir:
         raise HTTPException(status_code=404, detail="Turnir tapylmady!")
