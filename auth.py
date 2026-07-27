@@ -13,7 +13,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 hepde
 
 def hash_password(password: str) -> str:
     """Paroly hash et - bcrypt 72 byte çäkli"""
-    # bcrypt 72 byte-dan uly parol kabul etmeýär
     password_bytes = password.encode('utf-8')
     if len(password_bytes) > 71:
         password_bytes = password_bytes[:71]
@@ -54,15 +53,17 @@ def decode_token(token: str):
         return None
 
 
-# Admin paroly (environment variable-dan)
-ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH", "")
-
 def verify_admin_password(password: str) -> bool:
     """Admin parolyny barla"""
-    if not ADMIN_PASSWORD_HASH:
-        # Ilkinji gezek - default parol
-        return password == os.getenv("ADMIN_PASSWORD", "admin123")
-    return verify_password(password, ADMIN_PASSWORD_HASH)
+    from config import settings
+    hash_val = settings.admin_sifre_hash
+
+    # Eger hash boş ýa-da default "admin123" bolsa - düz metin barla
+    if not hash_val or hash_val == "admin123":
+        return password == "admin123"
+
+    # Hash edilen paroly barla
+    return verify_password(password, hash_val)
 
 
 # FastAPI dependency
@@ -72,7 +73,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 security = HTTPBearer()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Häzirki ulanyjy barla"""
+    """Häzirki ulanyjy barla - JWT payload dict döndürýär"""
     token = credentials.credentials
     payload = decode_token(token)
     if payload is None:
@@ -87,7 +88,6 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Admin barla"""
     payload = get_current_user(credentials)
-    # Admin tekshiruvi (telefon belgi ýa-da başga identifikator)
     if not payload.get("is_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
