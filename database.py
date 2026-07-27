@@ -3,12 +3,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from config import settings
 
-# Railway-da "postgres://" bolsa "postgresql://" çalyşmaly
 DATABASE_URL = settings.database_url
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Railway PostgreSQL SSL talap edýär
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
@@ -23,4 +21,3 @@ def get_db():
         yield db
     finally:
         db.close()
-        
