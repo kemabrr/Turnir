@@ -57,11 +57,11 @@ def verify_admin_password(password: str) -> bool:
     """Admin parolyny barla"""
     from config import settings
     hash_val = settings.admin_sifre_hash
-    
+
     # Eger hash boş ýa-da default "admin123" bolsa - düz metin barla
     if not hash_val or hash_val == "admin123":
         return password == "admin123"
-    
+
     # Hash edilen paroly barla
     return verify_password(password, hash_val)
 
