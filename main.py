@@ -89,4 +89,5 @@ async def rate_limit_handler(request: Request, exc):
     return JSONResponse(
         status_code=429,
         content={"success": False, "message": "Gaty köp synanyşyk!"}
-    )
+)
+    
