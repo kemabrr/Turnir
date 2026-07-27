@@ -1,10 +1,17 @@
-"""Database modelleri"""
+"""Database modelleri - SQLAlchemy 2.0"""
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Index
 from datetime import datetime
 from database import Base
 
 class Katilimci(Base):
     __tablename__ = "katilimcilar"
+    __table_args__ = (
+        Index("idx_katilimci_ref", "referans_kodu"),
+        Index("idx_katilimci_telefon", "telefon"),
+        Index("idx_katilimci_takim", "takim_kodu"),
+        Index("idx_katilimci_pubg", "pubg_id"),
+        Index("idx_katilimci_turnir", "turnir_id"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     referans_kodu = Column(String(20), unique=True, nullable=False)
@@ -26,6 +33,9 @@ class Katilimci(Base):
 
 class Takim(Base):
     __tablename__ = "takimlar"
+    __table_args__ = (
+        Index("idx_takim_kod", "takim_kodu"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     takim_kodu = Column(String(20), unique=True, nullable=False)
@@ -38,6 +48,9 @@ class Takim(Base):
 
 class Turnir(Base):
     __tablename__ = "turnirler"
+    __table_args__ = (
+        Index("idx_turnir_status", "status"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     ad = Column(String(100), nullable=False)
@@ -63,12 +76,3 @@ class Ayar(Base):
 
     key = Column(String(50), primary_key=True)
     value = Column(Text, nullable=False)
-
-# Indexler
-Index("idx_katilimci_ref", Katilimci.referans_kodu)
-Index("idx_katilimci_telefon", Katilimci.telefon)
-Index("idx_katilimci_takim", Katilimci.takim_kodu)
-Index("idx_katilimci_pubg", Katilimci.pubg_id)
-Index("idx_katilimci_turnir", Katilimci.turnir_id)
-Index("idx_takim_kod", Takim.takim_kodu)
-Index("idx_turnir_status", Turnir.status)
