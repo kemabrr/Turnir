@@ -55,7 +55,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://turnirhtml.pages.dev",  # Siziň frontend URL-iňiz
+        "https://turnirhtml.pages.dev",
+        "https://irhtml.pages.dev",
+        "https://*.pages.dev",
         "http://localhost:5500",
         "http://127.0.0.1:5500",
         "http://localhost:3000",
@@ -376,6 +378,7 @@ def api_profil(current_user: dict = Depends(get_current_user), db: Session = Dep
 
     return {
         "success": True,
+        "message": "Profil maglumatlary",
         "data": {
             "katilimci": {
                 "referans_kodu": kat.referans_kodu,
