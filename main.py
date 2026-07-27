@@ -514,7 +514,7 @@ def api_takima_katil(request: Request, data: TakimaKatil, current_user: dict = D
 
     db.commit()
 
-    msg = f"👥 <b>TOPARA TÄZE AGZA!</b>\n\nTopar: {takim.takim_adi or 'Topar'}\nKod: {takim_kodu}\n👤 {uye['ad']}"
+    msg = f"👥 <b>TOPARA TÄZE AGZA!</b>\n\nTopar: {takim.takim_adi or 'Topar'}\nKod: {takim_kodu}\n👤 {uye.ad}"
     send_telegram_message(msg)
     logger.info(f"Katil: {takim_kodu} - {uye.ad}")
 
@@ -552,6 +552,8 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
         phone_clean = payment_phone if payment_phone else ""
 
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
+    if not kat:
+        raise HTTPException(status_code=404, detail="Katylyjy tapylmady!")
 
     if not is_tolekli:
         now = datetime.utcnow()
