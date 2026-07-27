@@ -3,7 +3,6 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 
-# ========== AUTH ==========
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -18,7 +17,6 @@ class UserCreate(BaseModel):
     parol: str = Field(..., min_length=6)
     parol_tekrar: str
 
-# ========== KATILIMCI ==========
 class KatilimciResponse(BaseModel):
     id: int
     referans_kodu: str
@@ -44,7 +42,6 @@ class KatilimciMeResponse(BaseModel):
     katilimci: Optional[dict] = None
     message: Optional[str] = None
 
-# ========== TAKIM ==========
 class TakimOlustur(BaseModel):
     takim_adi: str = Field(..., min_length=2, max_length=50)
 
@@ -64,7 +61,6 @@ class TakimResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# ========== TURNIR ==========
 class TurnirCreate(BaseModel):
     ad: str
     senesi: str
@@ -125,18 +121,15 @@ class TurnirResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# ========== ODEME ==========
 class OdemeYapildi(BaseModel):
     pass
 
-# ========== TURNIR GOSUL ==========
 class TurnirGosul(BaseModel):
     pubg_id: str
     payment_phone: Optional[str] = ""
     tournament_id: Optional[str] = ""
     turnir_id: Optional[int] = None
 
-# ========== ADMIN ==========
 class AdminLogin(BaseModel):
     sifre: str = Field(..., min_length=6)
 
@@ -155,7 +148,6 @@ class AdminTurnirSil(BaseModel):
 class AdminAyarlar(BaseModel):
     ayarlar: dict
 
-# ========== STATS ==========
 class StatsResponse(BaseModel):
     toplam: int
     odeme_yapan: int
@@ -163,14 +155,12 @@ class StatsResponse(BaseModel):
     yer_sany: int
     galan: int
 
-# ========== BAYRAKLAR ==========
 class BayrakResponse(BaseModel):
     bir: dict
     iki: dict
     uc: dict
     jemi: str
 
-# ========== RESPONSE ==========
 class SuccessResponse(BaseModel):
     success: bool
     message: Optional[str] = None
