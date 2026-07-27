@@ -127,7 +127,7 @@ class TurnirResponse(BaseModel):
 
 # ========== ODEME ==========
 class OdemeYapildi(BaseModel):
-    pass  # JWT bilen tanalýar
+    pass
 
 # ========== TURNIR GOSUL ==========
 class TurnirGosul(BaseModel):
@@ -173,5 +173,5 @@ class BayrakResponse(BaseModel):
 # ========== RESPONSE ==========
 class SuccessResponse(BaseModel):
     success: bool
-    message: str
+    message: Optional[str] = None
     data: Optional[dict] = None
