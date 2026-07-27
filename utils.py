@@ -179,3 +179,4 @@ def sanitize(text, max_len=100):
     if not text:
         return ""
     return html_escape(str(text).strip())[:max_len]
+    
