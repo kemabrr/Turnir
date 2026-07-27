@@ -13,20 +13,20 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 def hash_password(password: str) -> str:
     """Paroly hash et - bcrypt 72 byte çäkli"""
-    password_bytes = password.encode('utf-8')
+    password_bytes = password.encode("utf-8")
     if len(password_bytes) > 71:
         password_bytes = password_bytes[:71]
     salt = bcrypt.gensalt(rounds=12)
     hashed = bcrypt.hashpw(password_bytes, salt)
-    return hashed.decode('utf-8')
+    return hashed.decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Paroly barla"""
-    password_bytes = plain_password.encode('utf-8')
+    password_bytes = plain_password.encode("utf-8")
     if len(password_bytes) > 71:
         password_bytes = password_bytes[:71]
-    hashed_bytes = hashed_password.encode('utf-8')
+    hashed_bytes = hashed_password.encode("utf-8")
     return bcrypt.checkpw(password_bytes, hashed_bytes)
 
 
@@ -56,16 +56,11 @@ def decode_token(token: str):
 def verify_admin_password(password: str) -> bool:
     """Admin parolyny barla"""
     hash_val = settings.admin_sifre_hash
-
-    # Eger hash boş ýa-da default "admin123" bolsa - düz metin barla
     if not hash_val or hash_val == "admin123":
         return password == "admin123"
-
-    # Hash edilen paroly barla
     return verify_password(password, hash_val)
 
 
-# FastAPI dependencies
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
@@ -94,3 +89,4 @@ def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(securi
             detail="Admin hukuklary ýok",
         )
     return payload
+    
