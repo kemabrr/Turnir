@@ -55,7 +55,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        settings.frontend_url,
+        "https://turnirhtml.pages.dev",  # Siziň frontend URL-iňiz
         "http://localhost:5500",
         "http://127.0.0.1:5500",
         "http://localhost:3000",
@@ -64,6 +64,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 security = HTTPBearer()
 
