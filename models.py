@@ -33,9 +33,7 @@ class Katilimci(Base):
 
 class Takim(Base):
     __tablename__ = "takimlar"
-    __table_args__ = (
-        Index("idx_takim_kod", "takim_kodu"),
-    )
+    __table_args__ = (Index("idx_takim_kod", "takim_kodu"),)
 
     id = Column(Integer, primary_key=True, index=True)
     takim_kodu = Column(String(20), unique=True, nullable=False)
@@ -48,9 +46,7 @@ class Takim(Base):
 
 class Turnir(Base):
     __tablename__ = "turnirler"
-    __table_args__ = (
-        Index("idx_turnir_status", "status"),
-    )
+    __table_args__ = (Index("idx_turnir_status", "status"),)
 
     id = Column(Integer, primary_key=True, index=True)
     ad = Column(String(100), nullable=False)
@@ -73,6 +69,5 @@ class Turnir(Base):
 
 class Ayar(Base):
     __tablename__ = "ayarlar"
-
     key = Column(String(50), primary_key=True)
     value = Column(Text, nullable=False)
