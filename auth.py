@@ -1,14 +1,14 @@
-"""Auth utilities - bcrypt bilen"""
-import os
+"""Auth utilities - JWT we bcrypt"""
 import jwt
 from datetime import datetime, timedelta
 from typing import Optional
 import bcrypt
 
-# JWT sazlamalary
-SECRET_KEY = os.getenv("SECRET_KEY", "sizin-gizli-acharynyz-buraya-yazin")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 hepde
+from config import settings
+
+SECRET_KEY = settings.secret_key
+ALGORITHM = settings.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 
 def hash_password(password: str) -> str:
@@ -55,7 +55,6 @@ def decode_token(token: str):
 
 def verify_admin_password(password: str) -> bool:
     """Admin parolyny barla"""
-    from config import settings
     hash_val = settings.admin_sifre_hash
 
     # Eger hash boş ýa-da default "admin123" bolsa - düz metin barla
@@ -66,11 +65,12 @@ def verify_admin_password(password: str) -> bool:
     return verify_password(password, hash_val)
 
 
-# FastAPI dependency
+# FastAPI dependencies
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 security = HTTPBearer()
+
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Häzirki ulanyjy barla - JWT payload dict döndürýär"""
