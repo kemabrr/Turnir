@@ -31,6 +31,7 @@ def api_stats(turnir_id: Optional[int] = None, db: Session = Depends(get_db)):
 
 
 
+
 @router.get("/api/turnir-data")
 def api_turnir_data(turnir_id: Optional[int] = None, db: Session = Depends(get_db)):
     return {"success": True, "turnir": get_turnir_data(db, turnir_id)}
