@@ -80,16 +80,15 @@ def send_telegram_message(message: str) -> bool:
 
 
 def get_stats(db: Session, turnir_id: int = None) -> dict:
-    # ... (özgermeýär)
     query = db.query(Katilimci)
-    if turnir_id:
+    if turnir_id is not None:  # 0 hem barlaýar
         query = query.filter(Katilimci.turnir_id == turnir_id)
 
     toplam = query.count()
     odeme_yapan = query.filter(Katilimci.odeme_durumu == 1).count()
     onaylanan = query.filter(Katilimci.admin_onay == 1).count()
 
-    if turnir_id:
+    if turnir_id is not None:
         turnir = db.query(Turnir).filter(Turnir.id == turnir_id).first()
         yer_sany = turnir.yer_sany if turnir else 100
     else:
@@ -102,6 +101,7 @@ def get_stats(db: Session, turnir_id: int = None) -> dict:
         "yer_sany": yer_sany,
         "galan": max(0, yer_sany - onaylanan)
     }
+
 
 
 def get_turnir_data(db: Session, turnir_id: int = None) -> dict:
