@@ -52,13 +52,12 @@ def api_takim_olustur(request: Request, data: TakimOlustur, current_user: dict =
     lider.takim_lideri = 1
     db.commit()
 
-    # TÄZE — şuny goş (db.commit()-den soň, return-dan öň)
+    # Telegram habar
     msg = f"🏰 <b>TÄZE TOPAR DÖREDILDI!</b>\n\n👤 Lider: {lider.ad}\n🔑 {lider_ref}\n👥 Topar: {takim_adi}\n🎫 Kod: {kod}"
     send_telegram_message(msg)
 
     logger.info(f"Topar: {kod} - {takim_adi}")
     return {"success": True, "message": "Topar üstünlikli döredildi!", "data": {"takim_kodu": kod}}
-"data": {"takim_kodu": kod}}
 
 
 @router.post("/api/takima-katil", response_model=SuccessResponse)
