@@ -104,9 +104,11 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
         raise HTTPException(status_code=404, detail="Turnir tapylmady!")
 
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
+    if not kat:
+        raise HTTPException(status_code=404, detail="Katylyjy tapylmady!")
     
     # Eger ulanyjy eýýäm bu turnira gatnaşan bolsa
-    if kat and kat.turnir_id == turnir_id and kat.admin_onay != 2:
+    if kat.turnir_id == turnir_id and kat.admin_onay != 2:
         raise HTTPException(status_code=400, detail="Siz eýýäm bu turnira gatnaşdyňyz!")
 
     is_tolekli = turnir.tolekli == 1
@@ -117,6 +119,7 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
     else:
         phone_clean = payment_phone if payment_phone else ""
 
+    # TÖLEGSIZ turnir — awtomatik tassyklanýar
     if not is_tolekli:
         now = datetime.utcnow()
         kat.pubg_id = pubg_id
@@ -126,9 +129,10 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
         kat.odeme_durumu = 1
         kat.admin_onay = 1
         kat.onay_tarihi = now
+        kat.odeme_tarihi = now
         db.commit()
 
-        # TÄZE — Telegram habar (TÖLEGSIZ)
+        # Telegram habar
         msg = f"🆓 <b>TÖLEGSIZ TURNIR!</b>\n\n👤 {kat.ad}\n🔑 {ref}\n🎮 PUBG ID: {pubg_id}\n🏆 {turnir.ad}"
         send_telegram_message(msg)
 
@@ -139,14 +143,18 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
             "data": {"turnir_id": turnir_id, "auto_approved": True}
         }
 
-    # TÖLEGLI turnir
+    # TÖLEGLI turnir — tassyksyz başlaýar
     kat.pubg_id = pubg_id
     kat.payment_phone = phone_clean
     kat.tournament_id = tournament_id
     kat.turnir_id = turnir_id
+    kat.odeme_durumu = 0        # TÄZE — täzeden tölegsiz
+    kat.admin_onay = 0          # TÄZE — täzeden tassyksyz
+    kat.onay_tarihi = None      # TÄZE — arassala
+    kat.odeme_tarihi = None     # TÄZE — arassala
     db.commit()
 
-    # TÄZE — Telegram habar (TÖLEGLI)
+    # Telegram habar
     msg = f"💳 <b>TÖLEGLI TURNIR GATNAŞYK!</b>\n\n👤 {kat.ad}\n🔑 {ref}\n🎮 PUBG ID: {pubg_id}\n🏆 {turnir.ad}\n📞 Töleg tel: {phone_clean}"
     send_telegram_message(msg)
 
