@@ -117,7 +117,7 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
     else:
         phone_clean = payment_phone if payment_phone else ""
 
-        if not is_tolekli:
+    if not is_tolekli:
         now = datetime.utcnow()
         kat.pubg_id = pubg_id
         kat.payment_phone = phone_clean
@@ -127,11 +127,11 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
         kat.admin_onay = 1
         kat.onay_tarihi = now
         db.commit()
-        
-        # TÄZE — şuny goş (db.commit()-den soň, return-dan öň)
+
+        # TÄZE — Telegram habar (TÖLEGSIZ)
         msg = f"🆓 <b>TÖLEGSIZ TURNIR!</b>\n\n👤 {kat.ad}\n🔑 {ref}\n🎮 PUBG ID: {pubg_id}\n🏆 {turnir.ad}"
         send_telegram_message(msg)
-        
+
         logger.info(f"Turnir goşul (tolegsiz): {ref} -> turnir_id: {turnir_id}")
         return {
             "success": True,
@@ -139,17 +139,17 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
             "data": {"turnir_id": turnir_id, "auto_approved": True}
         }
 
-
-        kat.pubg_id = pubg_id
+    # TÖLEGLI turnir
+    kat.pubg_id = pubg_id
     kat.payment_phone = phone_clean
     kat.tournament_id = tournament_id
     kat.turnir_id = turnir_id
     db.commit()
-    
-    # TÄZE — şuny goş (db.commit()-den soň, return-dan öň)
+
+    # TÄZE — Telegram habar (TÖLEGLI)
     msg = f"💳 <b>TÖLEGLI TURNIR GATNAŞYK!</b>\n\n👤 {kat.ad}\n🔑 {ref}\n🎮 PUBG ID: {pubg_id}\n🏆 {turnir.ad}\n📞 Töleg tel: {phone_clean}"
     send_telegram_message(msg)
-    
+
     logger.info(f"Turnir goşul (tolekli): {ref} -> turnir_id: {turnir_id}")
     return {
         "success": True,
