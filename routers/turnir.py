@@ -10,7 +10,7 @@ from database import get_db
 from models import Katilimci, Turnir
 from schemas import SuccessResponse, TurnirGosul
 from auth import get_current_user
-from utils import sanitize, validate_phone, get_stats, get_turnir_data, get_bayraklar, get_all_turnirler
+from utils import sanitize, validate_phone, get_stats, get_turnir_data, get_bayraklar, get_all_turnirler, send_telegram_message
 
 router = APIRouter(tags=["Turnir"])
 logger = logging.getLogger(__name__)
