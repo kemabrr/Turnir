@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from slowapi.util import get_remote_address
 from slowapi import Limiter
@@ -9,17 +10,37 @@ from slowapi import Limiter
 from database import get_db
 from models import Katilimci, Turnir
 from schemas import SuccessResponse, TurnirGosul
-from auth import get_current_user
-from utils import sanitize, validate_phone, get_stats, get_turnir_data, get_bayraklar, get_all_turnirler, send_telegram_message
+from auth import get_current_user, decode_token
+from utils import sanitize, validate_phone, get_stats, get_turnir_data, get_bayraklar, get_all_turnirler
 
 router = APIRouter(tags=["Turnir"])
 logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
+# Optional auth — login bolmadyk ulanyjylar üçin hem işleýär
+security_optional = HTTPBearer(auto_error=False)
+
+def get_current_user_optional(credentials: HTTPAuthorizationCredentials = Depends(security_optional)):
+    if not credentials:
+        return None
+    payload = decode_token(credentials.credentials)
+    return payload
+
 
 @router.get("/api/stats")
-def api_stats(turnir_id: Optional[int] = None, db: Session = Depends(get_db)):
-    # Eger turnir_id berilmedikde, soňky aktiw ýa-da upcoming turniri tap
+def api_stats(
+    turnir_id: Optional[int] = None, 
+    current_user: Optional[dict] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    # 1) Eger ulanyjy gatnaşan turniri bar bolsa, ŞOL turniriň statistikasyny görkez
+    if turnir_id is None and current_user:
+        ref = current_user.get("sub")
+        kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
+        if kat and kat.turnir_id and kat.admin_onay != 2:
+            turnir_id = kat.turnir_id
+    
+    # 2) Eger gatnaşan turniri ýok bolsa, soňky aktiw/upcoming turniri tap
     if turnir_id is None:
         turnir = db.query(Turnir).filter(
             Turnir.status.in_(["upcoming", "active"])
@@ -28,8 +49,6 @@ def api_stats(turnir_id: Optional[int] = None, db: Session = Depends(get_db)):
             turnir_id = turnir.id
     
     return {"success": True, "stats": get_stats(db, turnir_id)}
-
-
 
 
 @router.get("/api/turnir-data")
@@ -114,12 +133,14 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
         raise HTTPException(status_code=404, detail="Turnir tapylmady!")
 
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
-    if not kat:
-        raise HTTPException(status_code=404, detail="Katylyjy tapylmady!")
     
     # Eger ulanyjy eýýäm bu turnira gatnaşan bolsa
-    if kat.turnir_id == turnir_id and kat.admin_onay != 2:
+    if kat and kat.turnir_id == turnir_id and kat.admin_onay != 2:
         raise HTTPException(status_code=400, detail="Siz eýýäm bu turnira gatnaşdyňyz!")
+
+    # TÄZE: Eger ulanyjy eýýäm başga turnira gatnaşan bolsa (1 ulanyjy = 1 turnir)
+    if kat and kat.turnir_id and kat.turnir_id != turnir_id and kat.admin_onay != 2:
+        raise HTTPException(status_code=400, detail="Siz eýýäm başga turnira gatnaşdyňyz! Diňe bir turnira gatnaşyp bilersiňiz.")
 
     is_tolekli = turnir.tolekli == 1
     if is_tolekli:
@@ -129,7 +150,6 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
     else:
         phone_clean = payment_phone if payment_phone else ""
 
-    # TÖLEGSIZ turnir — awtomatik tassyklanýar
     if not is_tolekli:
         now = datetime.utcnow()
         kat.pubg_id = pubg_id
@@ -139,13 +159,7 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
         kat.odeme_durumu = 1
         kat.admin_onay = 1
         kat.onay_tarihi = now
-        kat.odeme_tarihi = now
         db.commit()
-
-        # Telegram habar
-        msg = f"🆓 <b>TÖLEGSIZ TURNIR!</b>\n\n👤 {kat.ad}\n🔑 {ref}\n🎮 PUBG ID: {pubg_id}\n🏆 {turnir.ad}"
-        send_telegram_message(msg)
-
         logger.info(f"Turnir goşul (tolegsiz): {ref} -> turnir_id: {turnir_id}")
         return {
             "success": True,
@@ -153,21 +167,11 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
             "data": {"turnir_id": turnir_id, "auto_approved": True}
         }
 
-    # TÖLEGLI turnir — tassyksyz başlaýar
     kat.pubg_id = pubg_id
     kat.payment_phone = phone_clean
     kat.tournament_id = tournament_id
     kat.turnir_id = turnir_id
-    kat.odeme_durumu = 0        # TÄZE — täzeden tölegsiz
-    kat.admin_onay = 0          # TÄZE — täzeden tassyksyz
-    kat.onay_tarihi = None      # TÄZE — arassala
-    kat.odeme_tarihi = None     # TÄZE — arassala
     db.commit()
-
-    # Telegram habar
-    msg = f"💳 <b>TÖLEGLI TURNIR GATNAŞYK!</b>\n\n👤 {kat.ad}\n🔑 {ref}\n🎮 PUBG ID: {pubg_id}\n🏆 {turnir.ad}\n📞 Töleg tel: {phone_clean}"
-    send_telegram_message(msg)
-
     logger.info(f"Turnir goşul (tolekli): {ref} -> turnir_id: {turnir_id}")
     return {
         "success": True,
