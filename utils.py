@@ -162,7 +162,6 @@ def get_bayraklar(db: Session, turnir_id: int = None) -> dict:
 
 
 def get_all_turnirler(db: Session, status: str = None, mode: str = None) -> List[dict]:
-    # ... (özgermeýär)
     query = db.query(Turnir)
     if status:
         query = query.filter(Turnir.status == status)
@@ -187,10 +186,12 @@ def get_all_turnirler(db: Session, status: str = None, mode: str = None) -> List
             "bayrak_jemi": row.bayrak_jemi,
             "status": row.status,
             "tolekli": row.tolekli,
+            "toplam": stats["toplam"],        # ← TÄZE goş
             "onaylanan": stats["onaylanan"],
             "galan": stats["galan"]
         })
     return result
+
 
 
 def validate_phone(phone: str):
