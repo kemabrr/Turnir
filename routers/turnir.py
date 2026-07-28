@@ -17,9 +17,18 @@ logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
 
-@router.get("/api/stats/{turnir_id}")
-def api_stats(turnir_id: int, db: Session = Depends(get_db)):
+@router.get("/api/stats")
+def api_stats(turnir_id: Optional[int] = None, db: Session = Depends(get_db)):
+    # Eger turnir_id berilmedikde, soňky aktiw ýa-da upcoming turniri tap
+    if turnir_id is None:
+        turnir = db.query(Turnir).filter(
+            Turnir.status.in_(["upcoming", "active"])
+        ).order_by(Turnir.created_at.desc()).first()
+        if turnir:
+            turnir_id = turnir.id
+    
     return {"success": True, "stats": get_stats(db, turnir_id)}
+
 
 
 @router.get("/api/turnir-data")
