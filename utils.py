@@ -81,26 +81,27 @@ def send_telegram_message(message: str) -> bool:
 
 def get_stats(db: Session, turnir_id: int = None) -> dict:
     query = db.query(Katilimci)
-    if turnir_id is not None:  # 0 hem barlaýar
+    if turnir_id:
         query = query.filter(Katilimci.turnir_id == turnir_id)
 
     toplam = query.count()
     odeme_yapan = query.filter(Katilimci.odeme_durumu == 1).count()
     onaylanan = query.filter(Katilimci.admin_onay == 1).count()
 
-    if turnir_id is not None:
+    if turnir_id:
         turnir = db.query(Turnir).filter(Turnir.id == turnir_id).first()
         yer_sany = turnir.yer_sany if turnir else 100
     else:
         yer_sany = int(get_ayar("turnir_yer_sany", "100", db))
 
     return {
-        "toplam": toplam,
+        "toplam": toplam,           # ← TÄZE goş
         "odeme_yapan": odeme_yapan,
         "onaylanan": onaylanan,
         "yer_sany": yer_sany,
         "galan": max(0, yer_sany - onaylanan)
     }
+
 
 
 
