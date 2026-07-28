@@ -40,9 +40,6 @@ def generate_ref_code(db: Session) -> str:
             return code
 
 
-# ═══════════════════════════════════════════════════════
-# BÖLÜMI ÜÝTGET — send_telegram_message
-# ═══════════════════════════════════════════════════════
 def send_telegram_message(message: str) -> bool:
     """Düýp Telegram Bot API-a sorgy ugradýar"""
     token = settings.telegram_bot_token
@@ -76,7 +73,6 @@ def send_telegram_message(message: str) -> bool:
     except requests.RequestException as e:
         logger.error(f"Telegram baglanyşyk ýalňyşlygy: {e}")
         return False
-# ═══════════════════════════════════════════════════════
 
 
 def get_stats(db: Session, turnir_id: int = None) -> dict:
@@ -182,7 +178,7 @@ def get_all_turnirler(db: Session, status: str = None, mode: str = None) -> List
             "bayrak_jemi": row.bayrak_jemi,
             "status": row.status,
             "tolekli": row.tolekli,
-            "toplam": stats["toplam"],        # ← TÄZE
+            "toplam": stats["toplam"],
             "onaylanan": stats["onaylanan"],
             "galan": stats["galan"]
         })
