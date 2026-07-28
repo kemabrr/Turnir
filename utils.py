@@ -95,7 +95,7 @@ def get_stats(db: Session, turnir_id: int = None) -> dict:
         yer_sany = int(get_ayar("turnir_yer_sany", "100", db))
 
     return {
-        "toplam": toplam,           # ← TÄZE goş
+        "toplam": toplam,
         "odeme_yapan": odeme_yapan,
         "onaylanan": onaylanan,
         "yer_sany": yer_sany,
@@ -103,10 +103,7 @@ def get_stats(db: Session, turnir_id: int = None) -> dict:
     }
 
 
-
-
 def get_turnir_data(db: Session, turnir_id: int = None) -> dict:
-    # ... (özgermeýär)
     if turnir_id:
         turnir = db.query(Turnir).filter(Turnir.id == turnir_id).first()
         if turnir:
@@ -137,7 +134,6 @@ def get_turnir_data(db: Session, turnir_id: int = None) -> dict:
 
 
 def get_bayraklar(db: Session, turnir_id: int = None) -> dict:
-    # ... (özgermeýär)
     if turnir_id:
         turnir = db.query(Turnir).filter(Turnir.id == turnir_id).first()
         if turnir:
@@ -161,7 +157,6 @@ def get_bayraklar(db: Session, turnir_id: int = None) -> dict:
     }
 
 
-def get_all_turnirler(db: Session, status: str = None, mode: str = None) -> List[dict]:
 def get_all_turnirler(db: Session, status: str = None, mode: str = None) -> List[dict]:
     query = db.query(Turnir)
     if status:
@@ -187,17 +182,14 @@ def get_all_turnirler(db: Session, status: str = None, mode: str = None) -> List
             "bayrak_jemi": row.bayrak_jemi,
             "status": row.status,
             "tolekli": row.tolekli,
-            "toplam": stats["toplam"],        # ← TÄZE goş
+            "toplam": stats["toplam"],        # ← TÄZE
             "onaylanan": stats["onaylanan"],
             "galan": stats["galan"]
         })
     return result
 
 
-
-
 def validate_phone(phone: str):
-    # ... (özgermeýär)
     if not phone:
         return False, None
     cleaned = re.sub(r"[\s\-\+\(\)]", "", phone)
@@ -211,8 +203,6 @@ def validate_phone(phone: str):
 
 
 def sanitize(text, max_len=100):
-    # ... (özgermeýär)
     if not text:
         return ""
     return html_escape(str(text).strip())[:max_len]
-        
