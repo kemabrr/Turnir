@@ -58,7 +58,7 @@ def api_takim_olustur(request: Request, data: TakimOlustur, current_user: dict =
 
     logger.info(f"Topar: {kod} - {takim_adi}")
     return {"success": True, "message": "Topar üstünlikli döredildi!", "data": {"takim_kodu": kod}}
-data": {"takim_kodu": kod}}
+"data": {"takim_kodu": kod}}
 
 
 @router.post("/api/takima-katil", response_model=SuccessResponse)
