@@ -40,20 +40,47 @@ def generate_ref_code(db: Session) -> str:
             return code
 
 
+# ═══════════════════════════════════════════════════════
+# BÖLÜMI ÜÝTGET — send_telegram_message
+# ═══════════════════════════════════════════════════════
 def send_telegram_message(message: str) -> bool:
-    if not settings.cloudflare_worker_url:
-        logger.warning("CLOUDFLARE_WORKER_URL bosh!")
+    """Düýp Telegram Bot API-a sorgy ugradýar"""
+    token = settings.telegram_bot_token
+    chat_id = settings.telegram_chat_id
+    
+    if not token or not chat_id:
+        logger.warning("TELEGRAM_BOT_TOKEN ýa-da TELEGRAM_CHAT_ID boş! Habar gitmedi.")
         return False
-    url = f"{settings.cloudflare_worker_url}/send-message"
+    
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    
     try:
-        response = requests.post(url, json={"message": message}, timeout=15)
-        return response.status_code == 200
+        response = requests.post(
+            url,
+            json={
+                "chat_id": chat_id,
+                "text": message,
+                "parse_mode": "HTML",
+                "disable_web_page_preview": True
+            },
+            timeout=15
+        )
+        
+        if response.status_code == 200:
+            logger.info("Telegram habar ugradyldy")
+            return True
+        else:
+            logger.error(f"Telegram error {response.status_code}: {response.text}")
+            return False
+            
     except requests.RequestException as e:
-        logger.error(f"Telegram error: {e}")
+        logger.error(f"Telegram baglanyşyk ýalňyşlygy: {e}")
         return False
+# ═══════════════════════════════════════════════════════
 
 
 def get_stats(db: Session, turnir_id: int = None) -> dict:
+    # ... (özgermeýär)
     query = db.query(Katilimci)
     if turnir_id:
         query = query.filter(Katilimci.turnir_id == turnir_id)
@@ -78,6 +105,7 @@ def get_stats(db: Session, turnir_id: int = None) -> dict:
 
 
 def get_turnir_data(db: Session, turnir_id: int = None) -> dict:
+    # ... (özgermeýär)
     if turnir_id:
         turnir = db.query(Turnir).filter(Turnir.id == turnir_id).first()
         if turnir:
@@ -108,6 +136,7 @@ def get_turnir_data(db: Session, turnir_id: int = None) -> dict:
 
 
 def get_bayraklar(db: Session, turnir_id: int = None) -> dict:
+    # ... (özgermeýär)
     if turnir_id:
         turnir = db.query(Turnir).filter(Turnir.id == turnir_id).first()
         if turnir:
@@ -132,6 +161,7 @@ def get_bayraklar(db: Session, turnir_id: int = None) -> dict:
 
 
 def get_all_turnirler(db: Session, status: str = None, mode: str = None) -> List[dict]:
+    # ... (özgermeýär)
     query = db.query(Turnir)
     if status:
         query = query.filter(Turnir.status == status)
@@ -163,6 +193,7 @@ def get_all_turnirler(db: Session, status: str = None, mode: str = None) -> List
 
 
 def validate_phone(phone: str):
+    # ... (özgermeýär)
     if not phone:
         return False, None
     cleaned = re.sub(r"[\s\-\+\(\)]", "", phone)
@@ -176,7 +207,8 @@ def validate_phone(phone: str):
 
 
 def sanitize(text, max_len=100):
+    # ... (özgermeýär)
     if not text:
         return ""
     return html_escape(str(text).strip())[:max_len]
-    
+        
