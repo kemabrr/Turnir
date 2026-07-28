@@ -1,4 +1,3 @@
-"""Turnir router - public + gatnaşyk"""
 import logging
 from datetime import datetime
 from typing import Optional
@@ -38,6 +37,53 @@ def api_turnirler(status: Optional[str] = None, mode: Optional[str] = None, db: 
     return {"success": True, "turnirler": get_all_turnirler(db, status, mode)}
 
 
+@router.get("/api/gatnas-durum/{turnir_id}")
+def api_gatnas_durum(turnir_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    ref = current_user.get("sub")
+    kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
+    if not kat:
+        raise HTTPException(status_code=404, detail="Katylyjy tapylmady")
+    is_joined = kat.turnir_id == turnir_id and kat.admin_onay != 2
+    return {
+        "success": True,
+        "is_joined": is_joined,
+        "turnir_id": kat.turnir_id,
+        "admin_onay": kat.admin_onay,
+        "odeme_durumu": kat.odeme_durumu
+    }
+
+
+@router.get("/api/gatnasylan-turnirler")
+def api_gatnasylan_turnirler(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    ref = current_user.get("sub")
+    kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
+    if not kat or not kat.turnir_id:
+        return {"success": True, "turnirler": []}
+    turnir = db.query(Turnir).filter(Turnir.id == kat.turnir_id).first()
+    if not turnir:
+        return {"success": True, "turnirler": []}
+    return {
+        "success": True,
+        "turnirler": [{
+            "id": turnir.id,
+            "ad": turnir.ad,
+            "senesi": turnir.senesi,
+            "wagty": turnir.wagty,
+            "karta": turnir.karta,
+            "mode": turnir.mode,
+            "gatnasym": turnir.gatnasym,
+            "tolek": turnir.tolek,
+            "tolek_usuly": turnir.tolek_usuly,
+            "yer_sany": turnir.yer_sany,
+            "bayrak_jemi": turnir.bayrak_jemi,
+            "status": turnir.status,
+            "tolekli": turnir.tolekli,
+            "admin_onay": kat.admin_onay,
+            "odeme_durumu": kat.odeme_durumu
+        }]
+    }
+
+
 @router.post("/api/turnir-gosul", response_model=SuccessResponse)
 @limiter.limit("3/minute")
 def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -50,7 +96,6 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
         raise HTTPException(status_code=400, detail="PUBG ID diňe san bolmaly (minimum 8)!")
 
     ref = current_user.get("sub")
-
     if not turnir_id:
         turnir_id = 1
 
@@ -58,16 +103,19 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
     if not turnir:
         raise HTTPException(status_code=404, detail="Turnir tapylmady!")
 
-    is_tolekli = turnir.tolekli == 1
+    kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
+    
+    # Eger ulanyjy eýýäm bu turnira gatnaşan bolsa
+    if kat and kat.turnir_id == turnir_id and kat.admin_onay != 2:
+        raise HTTPException(status_code=400, detail="Siz eýýäm bu turnira gatnaşdyňyz!")
 
+    is_tolekli = turnir.tolekli == 1
     if is_tolekli:
         valid, phone_clean = validate_phone(payment_phone)
         if not valid:
             raise HTTPException(status_code=400, detail="Telefon belgisi nadogry!")
     else:
         phone_clean = payment_phone if payment_phone else ""
-
-    kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
 
     if not is_tolekli:
         now = datetime.utcnow()
@@ -91,7 +139,6 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
     kat.tournament_id = tournament_id
     kat.turnir_id = turnir_id
     db.commit()
-
     logger.info(f"Turnir goşul (tolekli): {ref} -> turnir_id: {turnir_id}")
     return {
         "success": True,
