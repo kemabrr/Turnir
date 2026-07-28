@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 
 
-@router.get("/api/stats")
-def api_stats(turnir_id: Optional[int] = None, db: Session = Depends(get_db)):
+@router.get("/api/stats/{turnir_id}")
+def api_stats(turnir_id: int, db: Session = Depends(get_db)):
     return {"success": True, "stats": get_stats(db, turnir_id)}
 
 
