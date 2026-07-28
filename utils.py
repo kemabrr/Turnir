@@ -186,11 +186,12 @@ def get_all_turnirler(db: Session, status: str = None, mode: str = None) -> List
             "bayrak_jemi": row.bayrak_jemi,
             "status": row.status,
             "tolekli": row.tolekli,
-            "toplam": stats["toplam"],        # ← TÄZE goş
+            "toplam": stats["toplam"],        # ← TÄZE
             "onaylanan": stats["onaylanan"],
             "galan": stats["galan"]
         })
     return result
+
 
 
 
