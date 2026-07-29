@@ -1,2 +1,0 @@
-# Turnir
-Databasely turnir
