@@ -100,6 +100,8 @@ def api_admin_turnir_ekle(data: TurnirCreate, admin: dict = Depends(get_current_
     gatnasym = sanitize(data.gatnasym, 100)
     tolek = sanitize(data.tolek, 50)
     tolek_usuly = sanitize(data.tolek_usuly, 100)
+    # TÄZE — Lobi kody
+    lobi_kodu = sanitize(data.lobi_kodu, 50) if data.lobi_kodu else None
 
     if not all([ad, senesi, wagty, karta]):
         raise HTTPException(status_code=400, detail="Ad, sene, wagt we karta hökmany!")
@@ -121,13 +123,14 @@ def api_admin_turnir_ekle(data: TurnirCreate, admin: dict = Depends(get_current_
         bayrak_jemi=sanitize(data.bayrak_jemi, 50),
         status=sanitize(data.status, 20),
         tolekli=1 if data.tolekli else 0,
+        lobi_kodu=lobi_kodu,  # TÄZE
         created_at=now
     )
     db.add(new_turnir)
     db.commit()
     db.refresh(new_turnir)
 
-    logger.info(f"Täze turnir goşuldy: {ad} (tolekli={data.tolekli})")
+    logger.info(f"Täze turnir goşuldy: {ad} (tolekli={data.tolekli}, lobi={lobi_kodu})")
     return {"success": True, "message": "Turnir üstünlikli goşuldy!"}
 
 
@@ -152,6 +155,7 @@ def api_admin_turnir_guncelle(data: TurnirUpdate, admin: dict = Depends(get_curr
     if data.bayrak_jemi is not None: turnir.bayrak_jemi = sanitize(data.bayrak_jemi, 50)
     if data.status is not None: turnir.status = sanitize(data.status, 20)
     if data.tolekli is not None: turnir.tolekli = 1 if data.tolekli else 0
+    if data.lobi_kodu is not None: turnir.lobi_kodu = sanitize(data.lobi_kodu, 50)  # TÄZE
 
     db.commit()
     logger.info(f"Turnir üýtgedildi: ID {data.turnir_id}")
@@ -269,5 +273,6 @@ def api_turnir_detay(turnir_id: int, admin: dict = Depends(get_current_admin), d
         "status": turnir.status,
         "tolekli": turnir.tolekli,
         "durum": turnir.durum,
+        "lobi_kodu": turnir.lobi_kodu,  # TÄZE
         "created_at": turnir.created_at.isoformat() if turnir.created_at else None
     }}
