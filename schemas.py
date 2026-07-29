@@ -77,6 +77,7 @@ class TurnirCreate(BaseModel):
     bayrak_jemi: str = "500 M"
     status: str = "upcoming"
     tolekli: bool = True
+    lobi_kodu: Optional[str] = None
 
 class TurnirUpdate(BaseModel):
     turnir_id: int
@@ -95,6 +96,7 @@ class TurnirUpdate(BaseModel):
     bayrak_jemi: Optional[str] = None
     status: Optional[str] = None
     tolekli: Optional[bool] = None
+    lobi_kodu: Optional[str] = None
 
 class TurnirResponse(BaseModel):
     id: int
@@ -114,6 +116,7 @@ class TurnirResponse(BaseModel):
     status: str
     tolekli: int
     durum: int
+    lobi_kodu: Optional[str] = None
     created_at: datetime
     onaylanan: int = 0
     galan: int = 0
