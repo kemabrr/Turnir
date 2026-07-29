@@ -10,7 +10,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from database import engine, Base
-from routers import auth, profile, payment, teams, turnir, admin, lobi
+from routers import auth, profile, payment, teams, turnir, admin
 
 # Tablisalary döret
 Base.metadata.create_all(bind=engine)
@@ -56,7 +56,6 @@ app.include_router(payment.router)
 app.include_router(teams.router)
 app.include_router(turnir.router)
 app.include_router(admin.router)
-app.include_router(lobi.router)
 
 
 @app.get("/")
@@ -91,3 +90,4 @@ async def rate_limit_handler(request: Request, exc):
         status_code=429,
         content={"success": False, "message": "Gaty köp synanyşyk!"}
     )
+    
