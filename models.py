@@ -66,6 +66,8 @@ class Turnir(Base):
     tolekli = Column(Integer, default=1)
     durum = Column(Integer, default=1)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    # TÄZE
+    lobi_kodu = Column(String(50))
 
 class Ayar(Base):
     __tablename__ = "ayarlar"
