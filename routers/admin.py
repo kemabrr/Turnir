@@ -104,6 +104,8 @@ def api_admin_turnir_ekle(data: TurnirCreate, admin: dict = Depends(get_current_
     if not all([ad, senesi, wagty, karta]):
         raise HTTPException(status_code=400, detail="Ad, sene, wagt we karta hökmany!")
 
+    lobi_kodu = sanitize(data.lobi_kodu or "", 50)
+
     now = datetime.utcnow()
     new_turnir = Turnir(
         ad=ad,
@@ -121,6 +123,7 @@ def api_admin_turnir_ekle(data: TurnirCreate, admin: dict = Depends(get_current_
         bayrak_jemi=sanitize(data.bayrak_jemi, 50),
         status=sanitize(data.status, 20),
         tolekli=1 if data.tolekli else 0,
+        lobi_kodu=lobi_kodu,
         created_at=now
     )
     db.add(new_turnir)
@@ -152,6 +155,7 @@ def api_admin_turnir_guncelle(data: TurnirUpdate, admin: dict = Depends(get_curr
     if data.bayrak_jemi is not None: turnir.bayrak_jemi = sanitize(data.bayrak_jemi, 50)
     if data.status is not None: turnir.status = sanitize(data.status, 20)
     if data.tolekli is not None: turnir.tolekli = 1 if data.tolekli else 0
+    if data.lobi_kodu is not None: turnir.lobi_kodu = sanitize(data.lobi_kodu, 50)
 
     db.commit()
     logger.info(f"Turnir üýtgedildi: ID {data.turnir_id}")
@@ -269,5 +273,6 @@ def api_turnir_detay(turnir_id: int, admin: dict = Depends(get_current_admin), d
         "status": turnir.status,
         "tolekli": turnir.tolekli,
         "durum": turnir.durum,
+        "lobi_kodu": turnir.lobi_kodu or "",
         "created_at": turnir.created_at.isoformat() if turnir.created_at else None
     }}
