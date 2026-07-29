@@ -12,6 +12,7 @@ from models import Katilimci, Turnir
 from schemas import SuccessResponse, TurnirGosul
 from auth import get_current_user, decode_token
 from utils import sanitize, validate_phone, get_stats, get_turnir_data, get_bayraklar, get_all_turnirler
+from config import settings
 
 router = APIRouter(tags=["Turnir"])
 logger = logging.getLogger(__name__)
@@ -178,3 +179,107 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
         "message": "Turnira goşuldyňyz! Indi töleg ediň.",
         "data": {"turnir_id": turnir_id}
     }
+
+
+@router.get("/api/lobi-kodu")
+def api_lobi_kodu(
+    current_user: Optional[dict] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """
+    Lobi kody we kanal linklerini döndürýär.
+    Kanallar elmydama görünýär.
+    Lobi kody görkeziş şertleri:
+      - Tölegsiz turnir: gatnaşan badyňyzda görünýär
+      - Tölegli turnir: admin tassyklamasyndan soň görünýär
+    """
+    
+    # 1. Kanal linkleri (elmydama görünýär)
+    kanallar = {
+        "telegram": settings.telegram_channel_url or "",
+        "imo": settings.imo_channel_url or "",
+        "link": settings.link_channel_url or ""
+    }
+    
+    info_text = "Aşaky kanallarda turnir kody paýlaşylar, kody wagtynda bilmek üçin kanallara goşulun"
+    
+    # 2. Ulanyjy login bolmadyk
+    if not current_user:
+        return {
+            "success": True,
+            "kanallar": kanallar,
+            "info_text": info_text,
+            "lobi_kodu": None,
+            "görünýär": False,
+            "sebep": "Giriş ediň"
+        }
+    
+    ref = current_user.get("sub")
+    kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
+    
+    # 3. Ulanyjy haýsydyr bir turnira gatnaşmadyk
+    if not kat or not kat.turnir_id:
+        return {
+            "success": True,
+            "kanallar": kanallar,
+            "info_text": info_text,
+            "lobi_kodu": None,
+            "görünýär": False,
+            "sebep": "Siz entek haýsydyr bir turnira gatnaşmadynyz"
+        }
+    
+    turnir = db.query(Turnir).filter(Turnir.id == kat.turnir_id).first()
+    if not turnir:
+        return {
+            "success": True,
+            "kanallar": kanallar,
+            "info_text": info_text,
+            "lobi_kodu": None,
+            "görünýär": False,
+            "sebep": "Turnir tapylmady"
+        }
+    
+    # 4. Tölegsiz turnir → gatnaşan badyňyzda lobi kody görünýär
+    if turnir.tolekli == 0:
+        return {
+            "success": True,
+            "kanallar": kanallar,
+            "info_text": info_text,
+            "lobi_kodu": turnir.lobi_kodu or "",
+            "görünýär": True,
+            "turnir_ady": turnir.ad,
+            "turnir_id": turnir.id
+        }
+    
+    # 5. Tölegli turnir → diňe admin tassyklamasyndan soň (admin_onay == 1)
+    if kat.admin_onay == 1:
+        return {
+            "success": True,
+            "kanallar": kanallar,
+            "info_text": info_text,
+            "lobi_kodu": turnir.lobi_kodu or "",
+            "görünýär": True,
+            "turnir_ady": turnir.ad,
+            "turnir_id": turnir.id
+        }
+    elif kat.admin_onay == 2:
+        return {
+            "success": True,
+            "kanallar": kanallar,
+            "info_text": info_text,
+            "lobi_kodu": None,
+            "görünýär": False,
+            "sebep": "Katylyjylygyňyz ret edildi",
+            "turnir_ady": turnir.ad
+        }
+    else:
+        return {
+            "success": True,
+            "kanallar": kanallar,
+            "info_text": info_text,
+            "lobi_kodu": None,
+            "görünýär": False,
+            "sebep": "Admin tassyklamasy garasylýar",
+            "turnir_ady": turnir.ad
+    }
+        
