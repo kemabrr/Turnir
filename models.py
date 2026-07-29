@@ -65,7 +65,7 @@ class Turnir(Base):
     status = Column(String(20), default="upcoming")
     tolekli = Column(Integer, default=1)
     durum = Column(Integer, default=1)
-    lobi_kodu = Column(String(50))
+    lobi_kodu = Column(String(50), default="")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 class Ayar(Base):
