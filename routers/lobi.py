@@ -1,14 +1,50 @@
 """PUBG Lobi Kody Router"""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from database import get_db
 from models import Katilimci, Turnir
 from schemas import SuccessResponse
-from routers.auth import get_current_user
+from config import settings
 
 router = APIRouter(prefix="/api", tags=["Lobi Kody"])
+
+# JWT token dogrulamak üçin
+security = HTTPBearer()
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> Katilimci:
+    """
+    Authorization header-dan Bearer token alyp, JWT decode edýär.
+    Token-deki 'sub' (user id) bilen database-dan ulanyjy gözleýär.
+    """
+    token = credentials.credentials
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token nadogry ýa-da wagty gutardy",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(
+            token, 
+            settings.secret_key, 
+            algorithms=[settings.algorithm]
+        )
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    user = db.query(Katilimci).filter(Katilimci.id == int(user_id)).first()
+    if user is None:
+        raise credentials_exception
+    return user
 
 
 @router.get("/lobi-kodu", response_model=SuccessResponse)
