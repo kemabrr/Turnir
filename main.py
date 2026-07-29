@@ -39,12 +39,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # CORS - Cloudflare Pages üçin
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://turnirhtml.pages.dev",
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        "http://localhost:3000",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -92,3 +87,4 @@ async def rate_limit_handler(request: Request, exc):
         status_code=429,
         content={"success": False, "message": "Gaty köp synanyşyk!"}
     )
+    
