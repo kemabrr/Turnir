@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # TÄZE — Kanal URL-leri (Railway Environment Variables bilen goýup bilersiňiz)
     telegram_kanal_url: str = "https://t.me/sizin_kanal"
     imo_kanal_url: str = "https://imo.im/sizin_kanal"
-    link_kanal_url: str = "https://sizin-link.com"
+    link_kanal_url: str = "https://groups.linkm.me/#CjQKIKkEZDPW8IgZRwTIfOLwn811dKgSuRWcVK4vtDK2UWFAEhBM9gLE1A4csbHzjRSyfO09"
 
     class Config:
         env_file = ".env"
