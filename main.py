@@ -10,8 +10,8 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from database import engine, Base
-from routers import auth_routes, profile, payment, teams, turnir, admin
-from routers import lobi
+from routers import auth, profile, payment, teams, turnir, admin
+from routers import lobi  # TÄZE
 
 # Tablisalary döret
 Base.metadata.create_all(bind=engine)
@@ -46,13 +46,13 @@ app.add_middleware(
 )
 
 # Routerlary goş
-app.include_router(auth_routes.router)
+app.include_router(auth.router)
 app.include_router(profile.router)
 app.include_router(payment.router)
 app.include_router(teams.router)
 app.include_router(turnir.router)
 app.include_router(admin.router)
-app.include_router(lobi.router)
+app.include_router(lobi.router)  # TÄZE
 
 
 @app.get("/")
