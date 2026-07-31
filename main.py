@@ -10,7 +10,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from database import engine, Base
-from routers import auth-routes, profile, payment, teams, turnir, admin
+from routers import auth_routes, profile, payment, teams, turnir, admin
 from routers import lobi  # TÄZE
 
 # Tablisalary döret
