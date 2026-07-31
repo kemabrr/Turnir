@@ -46,7 +46,7 @@ app.add_middleware(
 )
 
 # Routerlary goş
-app.include_router(auth.router)
+app.include_router(auth_routes.router)
 app.include_router(profile.router)
 app.include_router(payment.router)
 app.include_router(teams.router)
