@@ -11,7 +11,7 @@ from database import get_db
 from models import Katilimci, Turnir
 from schemas import SuccessResponse, TurnirGosul
 from auth import get_current_user, decode_token
-from utils import sanitize, validate_phone, get_stats, get_turnir_data, get_bayraklar, get_all_turnirler
+from utils import sanitize, validate_phone, get_stats, get_turnir_data, get_bayraklar, get_all_turnirler, send_telegram_message
 
 router = APIRouter(tags=["Turnir"])
 logger = logging.getLogger(__name__)
@@ -150,7 +150,7 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
     else:
         phone_clean = payment_phone if payment_phone else ""
 
-    if not is_tolekli:
+        if not is_tolekli:
         now = datetime.utcnow()
         kat.pubg_id = pubg_id
         kat.payment_phone = phone_clean
@@ -160,12 +160,24 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
         kat.admin_onay = 1
         kat.onay_tarihi = now
         db.commit()
+        
+        # TÄZE — Telegram habar
+        msg = (
+            f"🎮 <b>TÖLEGSIZ TURNIRA GATNAŞDY!</b>\n\n"
+            f"👤 {kat.ad}\n"
+            f"🔑 {ref}\n"
+            f"🏆 {turnir.ad}\n"
+            f"📅 {now.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+        send_telegram_message(msg)
+        
         logger.info(f"Turnir goşul (tolegsiz): {ref} -> turnir_id: {turnir_id}")
         return {
             "success": True,
             "message": "Turnira üstünlikli goşuldyňyz!",
             "data": {"turnir_id": turnir_id, "auto_approved": True}
         }
+
 
     kat.pubg_id = pubg_id
     kat.payment_phone = phone_clean
