@@ -43,7 +43,7 @@ def api_stats(
     # 2) Eger gatnaşan turniri ýok bolsa, soňky aktiw/upcoming turniri tap
     if turnir_id is None:
         turnir = db.query(Turnir).filter(
-            Turnir.status.in_(["upcoming", "active"])
+            Turnir.status.in_(["upcoming", "current"])
         ).order_by(Turnir.created_at.desc()).first()
         if turnir:
             turnir_id = turnir.id
@@ -150,7 +150,7 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
     else:
         phone_clean = payment_phone if payment_phone else ""
 
-        if not is_tolekli:
+    if not is_tolekli:
         now = datetime.utcnow()
         kat.pubg_id = pubg_id
         kat.payment_phone = phone_clean
@@ -161,7 +161,7 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
         kat.onay_tarihi = now
         db.commit()
         
-        # TÄZE — Telegram habar
+        # TÄZE — Telegram habar tölegsiz turnir üçin
         msg = (
             f"🎮 <b>TÖLEGSIZ TURNIRA GATNAŞDY!</b>\n\n"
             f"👤 {kat.ad}\n"
@@ -177,7 +177,6 @@ def api_turnir_gosul(request: Request, data: TurnirGosul, current_user: dict = D
             "message": "Turnira üstünlikli goşuldyňyz!",
             "data": {"turnir_id": turnir_id, "auto_approved": True}
         }
-
 
     kat.pubg_id = pubg_id
     kat.payment_phone = phone_clean
