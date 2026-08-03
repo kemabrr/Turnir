@@ -1,5 +1,5 @@
 """Database modelleri - SQLAlchemy 2.0"""
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Index, Float
 from datetime import datetime
 from database import Base
 
@@ -66,10 +66,58 @@ class Turnir(Base):
     tolekli = Column(Integer, default=1)
     durum = Column(Integer, default=1)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    # TÄZE
     lobi_kodu = Column(String(50))
 
 class Ayar(Base):
     __tablename__ = "ayarlar"
     key = Column(String(50), primary_key=True)
     value = Column(Text, nullable=False)
+
+
+# ========== TÄZE: MAGAZYN MODELLERI ==========
+
+class UCPaket(Base):
+    """PUBG UC paketleri"""
+    __tablename__ = "uc_paketler"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ad = Column(String(100), nullable=False)
+    uc_sany = Column(Integer, nullable=False)
+    bahasy = Column(Float, nullable=False)
+    surat = Column(String(500))
+    aktiw = Column(Integer, default=1)
+    siralama = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Akkaunt(Base):
+    """PUBG satlyk akkauntlar"""
+    __tablename__ = "akkauntlar"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ad = Column(String(200), nullable=False)
+    level = Column(Integer, default=1)
+    rank = Column(String(50))
+    skin_sany = Column(Integer, default=0)
+    taryh = Column(Text)
+    bahasy = Column(Float, nullable=False)
+    suratlar = Column(Text)
+    aktiw = Column(Integer, default=1)
+    satyldy = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SatynAlma(Base):
+    """Satyn almalar taryhy"""
+    __tablename__ = "satyn_almalar"
+
+    id = Column(Integer, primary_key=True, index=True)
+    katilimci_ref = Column(String(20), ForeignKey("katilimcilar.referans_kodu"), nullable=False)
+    product_type = Column(String(20), nullable=False)
+    product_id = Column(Integer, nullable=False)
+    bahasy = Column(Float, nullable=False)
+    status = Column(String(20), default="pending")
+    telegram = Column(String(100))
+    pubg_id = Column(String(50))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime)
