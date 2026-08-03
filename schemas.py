@@ -77,7 +77,6 @@ class TurnirCreate(BaseModel):
     bayrak_jemi: str = "500 M"
     status: str = "upcoming"
     tolekli: bool = True
-    # TÄZE
     lobi_kodu: Optional[str] = None
 
 class TurnirUpdate(BaseModel):
@@ -97,7 +96,6 @@ class TurnirUpdate(BaseModel):
     bayrak_jemi: Optional[str] = None
     status: Optional[str] = None
     tolekli: Optional[bool] = None
-    # TÄZE
     lobi_kodu: Optional[str] = None
 
 class TurnirResponse(BaseModel):
@@ -121,7 +119,6 @@ class TurnirResponse(BaseModel):
     created_at: datetime
     onaylanan: int = 0
     galan: int = 0
-    # TÄZE
     lobi_kodu: Optional[str] = None
 
     class Config:
@@ -171,3 +168,68 @@ class SuccessResponse(BaseModel):
     success: bool
     message: Optional[str] = None
     data: Optional[dict] = None
+
+
+# ========== TÄZE: MAGAZYN SCHEMASLARY ==========
+
+class UCPaketCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=100)
+    uc_sany: int = Field(..., gt=0)
+    bahasy: float = Field(..., gt=0)
+    surat: Optional[str] = None
+    siralama: int = 0
+
+class UCPaketResponse(BaseModel):
+    id: int
+    ad: str
+    uc_sany: int
+    bahasy: float
+    surat: Optional[str] = None
+    aktiw: int
+    siralama: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class AkkauntCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=200)
+    level: int = 1
+    rank: Optional[str] = None
+    skin_sany: int = 0
+    taryh: Optional[str] = None
+    bahasy: float = Field(..., gt=0)
+    suratlar: Optional[str] = None
+
+class AkkauntResponse(BaseModel):
+    id: int
+    ad: str
+    level: int
+    rank: Optional[str] = None
+    skin_sany: int
+    taryh: Optional[str] = None
+    bahasy: float
+    suratlar: Optional[str] = None
+    aktiw: int
+    satyldy: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class SatynAlmaCreate(BaseModel):
+    product_type: str = Field(..., pattern="^(uc|akkaunt)$")
+    product_id: int = Field(..., gt=0)
+    telegram: Optional[str] = None
+    pubg_id: Optional[str] = None
+
+class SatynAlmaResponse(BaseModel):
+    id: int
+    katilimci_ref: str
+    product_type: str
+    product_id: int
+    bahasy: float
+    status: str
+    telegram: Optional[str] = None
+    pubg_id: Optional[str] = None
+    created_at: datetime
+    class Config:
+        from_attributes = True
