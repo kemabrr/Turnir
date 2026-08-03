@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @router.get("/api/uc-paketler", response_model=SuccessResponse)
 def api_uc_paketler(db: Session = Depends(get_db)):
-    """Ähli aktiv UC paketlerini getir"""
+    """Ahli aktiv UC paketlerini getir"""
     paketler = db.query(UCPaket).filter(UCPaket.aktiw == 1).order_by(UCPaket.siralama.asc()).all()
     return {
         "success": True,
@@ -39,7 +39,7 @@ def api_uc_paketler(db: Session = Depends(get_db)):
 
 @router.post("/api/admin/uc-paket-ekle", response_model=SuccessResponse)
 def api_uc_paket_ekle(data: UCPaketCreate, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
-    """Admin: Täze UC paket goş"""
+    """Admin: Taze UC paket gosh"""
     paket = UCPaket(
         ad=sanitize(data.ad, 100),
         uc_sany=data.uc_sany,
@@ -50,8 +50,8 @@ def api_uc_paket_ekle(data: UCPaketCreate, admin: dict = Depends(get_current_adm
     db.add(paket)
     db.commit()
     db.refresh(paket)
-    logger.info(f"UC paket goşuldy: {paket.ad}")
-    return {"success": True, "message": "UC paket goşuldy!", "data": {"id": paket.id}}
+    logger.info(f"UC paket goshuldy: {paket.ad}")
+    return {"success": True, "message": "UC paket goshuldy!", "data": {"id": paket.id}}
 
 
 @router.post("/api/admin/uc-paket-sil/{paket_id}", response_model=SuccessResponse)
@@ -69,7 +69,7 @@ def api_uc_paket_sil(paket_id: int, admin: dict = Depends(get_current_admin), db
 
 @router.get("/api/akkauntlar", response_model=SuccessResponse)
 def api_akkauntlar(db: Session = Depends(get_db)):
-    """Ähli satylyk akkauntlary getir"""
+    """Ahli satylyk akkauntlary getir"""
     akkauntlar = db.query(Akkaunt).filter(Akkaunt.aktiw == 1, Akkaunt.satyldy == 0).order_by(Akkaunt.created_at.desc()).all()
     return {
         "success": True,
@@ -91,7 +91,7 @@ def api_akkauntlar(db: Session = Depends(get_db)):
 
 @router.post("/api/admin/akkaunt-ekle", response_model=SuccessResponse)
 def api_akkaunt_ekle(data: AkkauntCreate, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
-    """Admin: Täze akkaunt goş"""
+    """Admin: Taze akkaunt gosh"""
     akkaunt = Akkaunt(
         ad=sanitize(data.ad, 200),
         level=data.level,
@@ -104,8 +104,8 @@ def api_akkaunt_ekle(data: AkkauntCreate, admin: dict = Depends(get_current_admi
     db.add(akkaunt)
     db.commit()
     db.refresh(akkaunt)
-    logger.info(f"Akkaunt goşuldy: {akkaunt.ad}")
-    return {"success": True, "message": "Akkaunt goşuldy!", "data": {"id": akkaunt.id}}
+    logger.info(f"Akkaunt goshuldy: {akkaunt.ad}")
+    return {"success": True, "message": "Akkaunt goshuldy!", "data": {"id": akkaunt.id}}
 
 
 @router.post("/api/admin/akkaunt-sil/{akkaunt_id}", response_model=SuccessResponse)
@@ -123,7 +123,7 @@ def api_akkaunt_sil(akkaunt_id: int, admin: dict = Depends(get_current_admin), d
 
 @router.post("/api/satyn-al", response_model=SuccessResponse)
 def api_satyn_al(data: SatynAlmaCreate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Ulanyjy: UC ýa-da akkaunt satyn al"""
+    """Ulanyjy: UC yada akkaunt satyn al"""
     ref = current_user.get("sub")
     kat = db.query(Katilimci).filter(Katilimci.referans_kodu == ref).first()
     if not kat:
@@ -141,7 +141,7 @@ def api_satyn_al(data: SatynAlmaCreate, current_user: dict = Depends(get_current
     else:
         product = db.query(Akkaunt).filter(Akkaunt.id == product_id, Akkaunt.aktiw == 1, Akkaunt.satyldy == 0).first()
         if not product:
-            raise HTTPException(status_code=404, detail="Akkaunt tapylmady ýa-da eýýäm satyldy!")
+            raise HTTPException(status_code=404, detail="Akkaunt tapylmady yada eyyam satyldy!")
         bahasy = product.bahasy
         ady = product.ad
         product.satyldy = 1
@@ -159,35 +159,21 @@ def api_satyn_al(data: SatynAlmaCreate, current_user: dict = Depends(get_current
     db.commit()
     db.refresh(satyn_alma)
 
-    msg = (
-        f"🛒 <b>TÄZE SARGYT!</b>
-
-"
-        f"👤 {kat.ad}
-"
-        f"🔑 {ref}
-"
-        f"📦 {ady}
-"
-        f"💰 {bahasy} TMT
-"
-        f"📱 Telegram: {data.telegram or 'Ýok'}
-"
-        f"🎮 PUBG ID: {data.pubg_id or 'Ýok'}"
-    )
+    # Telegram habar - bir setirde (syntax yalnyslygy yok)
+    msg = "<b>TÄZE SARGYT!</b>\n\n" + "👤 " + kat.ad + "\n🔑 " + ref + "\n📦 " + ady + "\n💰 " + str(bahasy) + " TMT\n📱 Telegram: " + (data.telegram or "Ýok") + "\n🎮 PUBG ID: " + (data.pubg_id or "Ýok")
     send_telegram_message(msg)
     logger.info(f"Satyn alma: {ref} -> {ady}")
 
     return {
         "success": True,
-        "message": "Sargyt üstünlikli ugradyldy! Admin tassyklamasyndan soň üstünlikli bolar.",
+        "message": "Sargyt ustuynlikli ugradyldy! Admin tassyklamasyndan son ustuynlikli bolar.",
         "data": {"sargyt_id": satyn_alma.id, "status": "pending"}
     }
 
 
 @router.get("/api/menin-sargytlarym", response_model=SuccessResponse)
 def api_menin_sargytlarym(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Ulanyjynyň sargytlary"""
+    """Ulanyjynyn sargytlary"""
     ref = current_user.get("sub")
     sargytlar = db.query(SatynAlma).filter(SatynAlma.katilimci_ref == ref).order_by(SatynAlma.created_at.desc()).all()
 
@@ -216,7 +202,7 @@ def api_menin_sargytlarym(current_user: dict = Depends(get_current_user), db: Se
 
 @router.get("/api/admin/sargytlar", response_model=SuccessResponse)
 def api_admin_sargytlar(admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
-    """Admin: Ähli sargytlary gör"""
+    """Admin: Ahli sargytlary gor"""
     sargytlar = db.query(SatynAlma).order_by(SatynAlma.created_at.desc()).all()
 
     result = []
@@ -260,7 +246,7 @@ def api_sargyt_tassykla(sargyt_id: int, admin: dict = Depends(get_current_admin)
 
 @router.post("/api/admin/sargyt-yzyna/{sargyt_id}", response_model=SuccessResponse)
 def api_sargyt_yzyna(sargyt_id: int, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
-    """Admin: Sargyt ýzyna çek"""
+    """Admin: Sargyt yzyna chek"""
     sargyt = db.query(SatynAlma).filter(SatynAlma.id == sargyt_id).first()
     if not sargyt:
         raise HTTPException(status_code=404, detail="Sargyt tapylmady!")
@@ -273,5 +259,5 @@ def api_sargyt_yzyna(sargyt_id: int, admin: dict = Depends(get_current_admin), d
     sargyt.status = "cancelled"
     db.commit()
 
-    logger.info(f"Sargyt ýzyna çekildi: {sargyt_id}")
-    return {"success": True, "message": "Sargyt ýzyna çekildi!"}
+    logger.info(f"Sargyt yzyna chekildi: {sargyt_id}")
+    return {"success": True, "message": "Sargyt yzyna chekildi!"}
