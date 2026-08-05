@@ -7,12 +7,35 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import UCPaket, Akkaunt, SatynAlma, Katilimci
-from schemas import SuccessResponse, UCPaketCreate, AkkauntCreate, SatynAlmaCreate
+from schemas import SuccessResponse, UCPaketCreate, UCPaketUpdate, AkkauntCreate, SatynAlmaCreate
 from auth import get_current_user, get_current_admin
-from utils import sanitize, send_telegram_message
+from utils import sanitize, send_telegram_message, get_ayar, set_ayar_db
 
 router = APIRouter(tags=["Magazyn"])
 logger = logging.getLogger(__name__)
+
+
+# ========== MAGAZYN AYARLAR ==========
+
+@router.get("/api/magazyn-ayarlar", response_model=SuccessResponse)
+def api_magazyn_ayarlar(db: Session = Depends(get_db)):
+    """Ulanyjy: Magazyn ayarlaryny getir (admin telefon we s.m.)"""
+    return {
+        "success": True,
+        "data": {
+            "admin_telefon": get_ayar("admin_telefon", "", db)
+        }
+    }
+
+
+@router.post("/api/admin/magazyn-ayar-sakla", response_model=SuccessResponse)
+def api_magazyn_ayar_sakla(data: dict, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
+    """Admin: admin_telefon we sh.m. ayarlary sakla"""
+    telefon = data.get("admin_telefon")
+    if telefon is not None:
+        set_ayar_db("admin_telefon", sanitize(str(telefon), 30), db)
+    db.commit()
+    return {"success": True, "message": "Ayarlar saklandy!"}
 
 
 # ========== UC PAKETLER ==========
@@ -52,6 +75,31 @@ def api_uc_paket_ekle(data: UCPaketCreate, admin: dict = Depends(get_current_adm
     db.refresh(paket)
     logger.info(f"UC paket goshuldy: {paket.ad}")
     return {"success": True, "message": "UC paket goshuldy!", "data": {"id": paket.id}}
+
+
+@router.post("/api/admin/uc-paket-uytget/{paket_id}", response_model=SuccessResponse)
+def api_uc_paket_uytget(paket_id: int, data: UCPaketUpdate, admin: dict = Depends(get_current_admin), db: Session = Depends(get_db)):
+    """Admin: UC paketiň bahasyny/maglumatyny uytget"""
+    paket = db.query(UCPaket).filter(UCPaket.id == paket_id).first()
+    if not paket:
+        raise HTTPException(status_code=404, detail="Paket tapylmady!")
+
+    if data.ad is not None:
+        paket.ad = sanitize(data.ad, 100)
+    if data.uc_sany is not None:
+        paket.uc_sany = data.uc_sany
+    if data.bahasy is not None:
+        paket.bahasy = data.bahasy
+    if data.surat is not None:
+        paket.surat = sanitize(data.surat, 500)
+    if data.siralama is not None:
+        paket.siralama = data.siralama
+    if data.aktiw is not None:
+        paket.aktiw = data.aktiw
+
+    db.commit()
+    logger.info(f"UC paket uytgedildi: {paket.id}")
+    return {"success": True, "message": "UC paket uytgedildi!"}
 
 
 @router.post("/api/admin/uc-paket-sil/{paket_id}", response_model=SuccessResponse)
