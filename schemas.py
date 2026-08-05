@@ -179,6 +179,14 @@ class UCPaketCreate(BaseModel):
     surat: Optional[str] = None
     siralama: int = 0
 
+class UCPaketUpdate(BaseModel):
+    ad: Optional[str] = Field(None, max_length=100)
+    uc_sany: Optional[int] = Field(None, gt=0)
+    bahasy: Optional[float] = Field(None, gt=0)
+    surat: Optional[str] = None
+    siralama: Optional[int] = None
+    aktiw: Optional[int] = None
+
 class UCPaketResponse(BaseModel):
     id: int
     ad: str
