@@ -8,8 +8,8 @@ from slowapi import Limiter
 
 from database import get_db
 from models import Katilimci
-from schemas import UserCreate, UserLogin, SuccessResponse
-from auth import hash_password, verify_password, create_access_token
+from schemas import UserCreate, UserLogin, AdminLogin, SuccessResponse
+from auth import hash_password, verify_password, create_access_token, verify_admin_password
 from utils import generate_ref_code, validate_phone, sanitize, send_telegram_message
 
 router = APIRouter(tags=["Auth"])
@@ -98,6 +98,23 @@ def api_login(request: Request, data: UserLogin, db: Session = Depends(get_db)):
         "success": True,
         "message": "Giriş üstünlikli!",
         "data": {"referans_kodu": kat.referans_kodu, "access_token": token}
+    }
+
+
+@router.post("/api/admin/login", response_model=SuccessResponse)
+@limiter.limit("5/minute")
+def api_admin_login(request: Request, data: AdminLogin):
+    """Admin login - parol barla we JWT token döret"""
+    if not verify_admin_password(data.sifre):
+        raise HTTPException(status_code=400, detail="Nadogry admin paroly!")
+
+    token = create_access_token({"sub": "admin", "type": "admin", "is_admin": True})
+    logger.info("Admin login")
+
+    return {
+        "success": True,
+        "message": "Admin girişi üstünlikli!",
+        "data": {"access_token": token}
     }
 
 
