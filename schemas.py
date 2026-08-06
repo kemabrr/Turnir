@@ -1,6 +1,6 @@
 """Pydantic schemas (JSON formatlary)"""
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Any
 from datetime import datetime
 
 class Token(BaseModel):
@@ -167,7 +167,7 @@ class BayrakResponse(BaseModel):
 class SuccessResponse(BaseModel):
     success: bool
     message: Optional[str] = None
-    data: Optional[dict] = None
+    data: Optional[Any] = None  # ✅ DICT, LIST, her zat kabul edýär
 
 
 # ========== TÄZE: MAGAZYN SCHEMASLARY ==========
