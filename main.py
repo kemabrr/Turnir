@@ -2,7 +2,8 @@
 import os
 import logging
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -65,6 +66,28 @@ def home():
 
 
 # ---------- ERROR HANDLERS ----------
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Ähli 'raise HTTPException(...)' -lary {success:false, message:...} görnüşine getir.
+    Bu bolmasa FastAPI ustunlik bilen {"detail": ...} iberyar, we frontend-in
+    result.message hemmesi 'undefined' bolup, hakyky sebäp gizlenýär."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"success": False, "message": exc.detail}
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Pydantic validasiýa ýalňyşlyklaryny-da (422) message görnüşine getir."""
+    errors = exc.errors()
+    first = errors[0] if errors else {}
+    field = ".".join(str(x) for x in first.get("loc", []) if x != "body")
+    msg = first.get("msg", "Maglumatlar nädogry")
+    return JSONResponse(
+        status_code=422,
+        content={"success": False, "message": f"{field}: {msg}" if field else msg}
+    )
 
 @app.exception_handler(404)
 async def not_found(request: Request, exc):
