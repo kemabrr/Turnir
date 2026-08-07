@@ -75,6 +75,43 @@ def send_telegram_message(message: str) -> bool:
         return False
 
 
+def send_telegram_photo(photo_bytes: bytes, filename: str, caption: str = "") -> bool:
+    """Telegram Bot API-a surat (screenshot) ugradýar"""
+    token = settings.telegram_bot_token
+    chat_id = settings.telegram_chat_id
+
+    if not token or not chat_id:
+        logger.warning("TELEGRAM_BOT_TOKEN ýa-da TELEGRAM_CHAT_ID boş! Surat gitmedi.")
+        return False
+
+    url = f"https://api.telegram.org/bot{token}/sendPhoto"
+
+    try:
+        response = requests.post(
+            url,
+            data={
+                "chat_id": chat_id,
+                "caption": caption,
+                "parse_mode": "HTML"
+            },
+            files={
+                "photo": (filename or "skrinshot.jpg", photo_bytes)
+            },
+            timeout=20
+        )
+
+        if response.status_code == 200:
+            logger.info("Telegram surat ugradyldy")
+            return True
+        else:
+            logger.error(f"Telegram photo error {response.status_code}: {response.text}")
+            return False
+
+    except requests.RequestException as e:
+        logger.error(f"Telegram surat baglanyşyk ýalňyşlygy: {e}")
+        return False
+
+
 def get_stats(db: Session, turnir_id: int = None) -> dict:
     query = db.query(Katilimci)
     if turnir_id:
