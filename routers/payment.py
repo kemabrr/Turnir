@@ -1,7 +1,7 @@
 """Töleg router"""
 import logging
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session
 from slowapi.util import get_remote_address
 from slowapi import Limiter
@@ -73,6 +73,7 @@ def api_odeme_yapildi(request: Request, current_user: dict = Depends(get_current
 @limiter.limit("5/minute")
 async def api_odeme_skrinshot_yukle(
     request: Request,
+    background_tasks: BackgroundTasks,
     skrinshot: UploadFile = File(...),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -113,11 +114,11 @@ async def api_odeme_skrinshot_yukle(
         f"🏆 {turnir_ady}\n"
         f"📅 {now.strftime('%Y-%m-%d %H:%M:%S')}"
     )
-    sent = send_telegram_photo(content, skrinshot.filename or f"{ref}.jpg", caption)
-    if not sent:
-        logger.warning(f"Telegram surat ugradylmady: {ref}")
 
-    logger.info(f"Odeme skrinshot ugradyldy: {ref}")
+    # TÄZE: Telegram-a ugratmak arka fonda gidýär - ulanyjy garaşmaýar
+    background_tasks.add_task(send_telegram_photo, content, skrinshot.filename or f"{ref}.jpg", caption)
+
+    logger.info(f"Odeme skrinshot nobata goşuldy: {ref}")
     return {
         "success": True,
         "message": "Töleg skrinshotyňyz ugradyldy! Admin tassyklamasyna garaşyň."
